@@ -1,8 +1,15 @@
+#![feature(pattern)]
+
 use std::env;
-use std::path::Path;
 use std::fmt;
 use std::fs::File;
-use std::io::{Write, BufReader, BufRead, Error};
+use std::io::{BufRead, BufReader, Error, Write};
+use std::path::Path;
+
+mod polygon;
+use polygon::Polygon;
+
+mod ext;
 
 #[derive(Debug, Clone)]
 pub enum GetOBJFileError {
@@ -24,52 +31,52 @@ impl std::fmt::Display for GetOBJFileError {
 fn get_obj_filepath() -> Result<String, GetOBJFileError> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
-        return Err(GetOBJFileError::FileNotSpecified)
+        return Err(GetOBJFileError::FileNotSpecified);
     }
 
     let obj_filepath = &args[1];
 
     if !obj_filepath.ends_with(".obj") {
-        return Err(GetOBJFileError::FileInvalid)
+        return Err(GetOBJFileError::FileInvalid);
     }
 
     if !Path::new(obj_filepath).exists() {
-        return Err(GetOBJFileError::FileNotFound)
+        return Err(GetOBJFileError::FileNotFound);
     }
 
-    return Ok(obj_filepath.to_string())
+    return Ok(obj_filepath.to_string());
 }
 
 fn process_obj(obj_filepath: String) -> Result<(), Error> {
-     let obj_file = File::open(obj_filepath)?;
-     let mut obj_reader = BufReader::new(obj_file);
+    let obj_file = File::open(obj_filepath)?;
+    let obj_reader = BufReader::new(obj_file);
 
-     let mut faces: Vec<Polygon> = vec![];
+    let mut faces: Vec<Polygon> = vec![];
 
-     for line in obj_reader.lines() {
-         let line_string = line.unwrap();
+    for line in obj_reader.lines() {
+        let line_string = line.unwrap();
 
-         if line_string.starts_with("f") {
-             let polygon = Polygon::from_string(line_string)
-             faces.push(polygon)
-         }
-     }
+        if line_string.starts_with("f") {
+            let polygon = Polygon::from_string(&line_string);
+            faces.push(polygon)
+        }
+    }
 
-     println!("{:?}", faces);
+    println!("{:?}", faces);
 
-     Ok(())
+    Ok(())
 }
 
 fn doubleside_obj_filepath(obj_filepath: String) {
     match process_obj(obj_filepath) {
         Ok(()) => println!("Double sided OBJ"),
-        Err(e) => println!("Error occurred: {}", e)
+        Err(e) => println!("Error occurred: {}", e),
     }
 }
 
 fn main() {
     match get_obj_filepath() {
         Ok(obj_filepath) => doubleside_obj_filepath(obj_filepath),
-        Err(e) => println!("{}", e)
+        Err(e) => println!("{}", e),
     }
 }

@@ -1,6 +1,7 @@
-use ext::StringExtension;
+use crate::ext::string::StringExtension;
+use std::fmt;
 
-#[derive(Debug, Copy, Move, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash)]
 pub struct Vertex {
     position: usize,
     normal: Option<usize>,
@@ -9,9 +10,7 @@ pub struct Vertex {
 
 impl std::fmt::Display for Vertex {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match *self {
-            write!(f, "{}", position);
-        }
+        write!(f, "{}", self.position)
     }
 }
 
@@ -33,33 +32,44 @@ impl std::fmt::Display for Vertex {
 // 			return polygonVertices.Count > 2;
 // 		}
 //
-#[derive(Debug, Copy, Move, PartialEq, Hash)]
+#[derive(Debug, Clone, PartialEq, Hash)]
 pub struct Polygon {
-    vertices: Vec<Vertex>
+    vertices: Vec<String>,
 }
 
 impl Polygon {
     pub fn from_string(polygon_string: &String) -> Self {
-        let mut vertices: Vec<Vertex> = vec![]
+        let mut vertices: Vec<String> = vec![];
 
-        let mut currentIndex = polygon_string.find(" ");
-        while {
-            let nextIndex = polygon_string.find_start_at(" ", currentIndex + 1);
-            let substringLength = nextIndex < 0 ? line.Length - currentIndex - 1 : nextIndex - currentIndex - 1;
+        let mut current_index = polygon_string.find(" ").unwrap();
+        while current_index != 0 {
+            let next_index = match polygon_string.find_start_at(" ", current_index + 1) {
+                Some(n) => n,
+                None => 0,
+            };
+
+            let substring_length = if next_index == 0 {
+                polygon_string.len() - current_index
+            } else {
+                next_index - current_index
+            };
+            vertices.push(
+                polygon_string[current_index + 1..current_index + substring_length].to_string(),
+            );
+            current_index = next_index;
         }
 
+        Self { vertices: vertices }
     }
-
-    fn
 }
 
 impl std::fmt::Display for Polygon {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match *self {
-            write!(f, "Couldn't find this OBJ file");
-            for vertex in self.vertices {
-                write!(f, "{}, ", vertex)
-            }
+        write!(f, "Polygon: ").unwrap();
+        for vertex in &self.vertices {
+            write!(f, "{}, ", vertex).unwrap();
         }
+
+        Ok(())
     }
 }
